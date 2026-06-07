@@ -258,8 +258,32 @@ const AdminManage = () => {
 
                     <tbody className="divide-y divide-slate-100">
                       {events.map((evt, idx) => {
-                        const statuses = ["Active", "Finished", "Draft"];
-                        const status = statuses[idx % 3];
+                        // Determine status dynamically based on current time (Active if event is today or in future, Finished if in past)
+                        const getEventStatus = (eventDateStr) => {
+                          try {
+                            if (!eventDateStr) return "Active";
+                            const cleanDateStr = eventDateStr.split(" - ")[0].trim();
+                            const parts = cleanDateStr.split("/");
+                            let eventDate;
+                            if (parts.length === 3) {
+                              const day = parseInt(parts[0], 10);
+                              const month = parseInt(parts[1], 10) - 1; // 0-indexed month
+                              const year = parseInt(parts[2], 10);
+                              eventDate = new Date(year, month, day);
+                            } else {
+                              eventDate = new Date(cleanDateStr);
+                            }
+                            
+                            // Set time to end of day to avoid premature finishing
+                            eventDate.setHours(23, 59, 59, 999);
+                            
+                            const now = new Date();
+                            return eventDate >= now ? "Active" : "Finished";
+                          } catch (e) {
+                            return "Active";
+                          }
+                        };
+                        const status = getEventStatus(evt.date);
                         return (
                           <tr
                             key={evt.id}
@@ -305,9 +329,7 @@ const AdminManage = () => {
                                 className={`px-2 py-0.5 text-[9px] font-bold rounded uppercase tracking-wider ${
                                   status === "Active"
                                     ? "bg-emerald-50 text-emerald-600 border border-emerald-100"
-                                    : status === "Finished"
-                                      ? "bg-slate-100 text-slate-500"
-                                      : "bg-blue-50 text-primary-blue border border-blue-100"
+                                    : "bg-slate-100 text-slate-500 border border-slate-200"
                                 }`}
                               >
                                 {status}
